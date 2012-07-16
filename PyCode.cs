@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace NPingyin
+namespace NPinyin
 {
   internal class PyCode
   {
