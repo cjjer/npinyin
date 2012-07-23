@@ -143,7 +143,6 @@ namespace NPinyin
     /// <returns>ch对应的拼音</returns>
     public static string GetPinyin(char ch)
     {
-      // 如果是中文或数字，则从hash表中检索
       short hash = GetHashIndex(ch);
       for (var i = 0; i < PyHash.hashes[hash].Length; ++i)
       {
