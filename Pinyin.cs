@@ -20,6 +20,16 @@
  * 汪思言 2011年1月3日凌晨
  * */
 
+/*
+ * v1.2.2.0的变化
+ * =================================================================
+ * 1、增加对不同编码格式文本的支持,同时增加编码转换方法Pinyin.ConvertEncoding
+ * 2、重构单字符拼音的获取，未找到拼音时返回字符本身.
+ * 
+ * 汪思言 2012年7月23日晚
+ * 
+ */
+
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -28,7 +38,12 @@ namespace NPinyin
 {
   public static class Pinyin
   {
-    // 返回中文文本的首字母
+    /// <summary>
+    /// 取中文文本的拼音首字母
+    /// </summary>
+    /// <param name="text">编码为UTF8的文本</param>
+    /// <returns>返回中文对应的拼音首字母</returns>
+ 
     public static string GetInitials(string text)
     {
       text = text.Trim();
@@ -42,12 +57,30 @@ namespace NPinyin
       return chars.ToString().ToUpper();
     }
 
-    // 返回中文文本的拼音
+
+    /// <summary>
+    /// 取中文文本的拼音首字母
+    /// </summary>
+    /// <param name="text">文本</param>
+    /// <param name="encoding">源文本的编码</param>
+    /// <returns>返回encoding编码类型中文对应的拼音首字母</returns>
+    public static string GetInitials(string text, Encoding encoding)
+    {
+      string temp = ConvertEncoding(text, encoding, Encoding.UTF8);
+      return ConvertEncoding(GetInitials(temp), Encoding.UTF8, encoding);
+    }
+
+
+
+    /// <summary>
+    /// 取中文文本的拼音
+    /// </summary>
+    /// <param name="text">编码为UTF8的文本</param>
+    /// <returns>返回中文文本的拼音</returns>
+ 
     public static string GetPinyin(string text)
     {
-      text = text.Trim();
       StringBuilder sbPinyin = new StringBuilder();
-
       for (var i = 0; i < text.Length; ++i)
       {
         string py = GetPinyin(text[i]);
@@ -58,27 +91,58 @@ namespace NPinyin
       return sbPinyin.ToString().Trim();
     }
 
-    // 返回和拼音相同的汉字列表
-    public static string GetChineseText(string Pinyin)
+    /// <summary>
+    /// 取中文文本的拼音
+    /// </summary>
+    /// <param name="text">编码为UTF8的文本</param>
+    /// <param name="encoding">源文本的编码</param>
+    /// <returns>返回encoding编码类型的中文文本的拼音</returns>
+    public static string GetPinyin(string text, Encoding encoding)
     {
-      string key = Pinyin.Trim().ToLower();
+      string temp = ConvertEncoding(text.Trim(), encoding, Encoding.UTF8);
+      return ConvertEncoding(GetPinyin(temp), Encoding.UTF8, encoding);
+    }
+
+    /// <summary>
+    /// 取和拼音相同的汉字列表
+    /// </summary>
+    /// <param name="Pinyin">编码为UTF8的拼音</param>
+    /// <returns>取拼音相同的汉字列表，如拼音“ai”将会返回“唉爱……”等</returns>
+    public static string GetChineseText(string pinyin)
+    {
+      string key = pinyin.Trim().ToLower();
 
       foreach (string str in PyCode.codes)
       {
         if (str.StartsWith(key + " ") || str.StartsWith(key + ":"))
-          return str.Substring(7);
+         return str.Substring(7);
       }
 
       return "";
     }
 
-    // 返回单个字符的汉字拼音
+
+    /// <summary>
+    /// 取和拼音相同的汉字列表，编码同参数encoding
+    /// </summary>
+    /// <param name="Pinyin">编码为encoding的拼音</param>
+    /// <param name="encoding">编码</param>
+    /// <returns>返回编码为encoding的拼音为pinyin的汉字列表，如拼音“ai”将会返回“唉爱……”等</returns>
+    public static string GetChineseText(string pinyin, Encoding encoding)
+    {
+      string text = ConvertEncoding(pinyin, encoding, Encoding.UTF8);
+      return ConvertEncoding(GetChineseText(text), Encoding.UTF8, encoding);
+    }
+
+
+
+    /// <summary>
+    /// 返回单个字符的汉字拼音
+    /// </summary>
+    /// <param name="ch">编码为UTF8的中文字符</param>
+    /// <returns>ch对应的拼音</returns>
     public static string GetPinyin(char ch)
     {
-      // 如果是英文字母则直接返回；
-      string letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
-      if (letters.IndexOf(ch) != -1) return ch.ToString();
-
       // 如果是中文或数字，则从hash表中检索
       short hash = GetHashIndex(ch);
       for (var i = 0; i < PyHash.hashes[hash].Length; ++i)
@@ -88,10 +152,39 @@ namespace NPinyin
         if (pos != -1)
           return PyCode.codes[index].Substring(0, 6).Trim();
       }
-
-      return "";
+      return ch.ToString();
     }
 
+    /// <summary>
+    /// 返回单个字符的汉字拼音
+    /// </summary>
+    /// <param name="ch">编码为encoding的中文字符</param>
+    /// <returns>编码为encoding的ch对应的拼音</returns>
+    public static string GetPinyin(char ch, Encoding encoding)
+    {
+      ch = ConvertEncoding(ch.ToString(), encoding, Encoding.UTF8)[0];
+      return ConvertEncoding(GetPinyin(ch), Encoding.UTF8, encoding);
+    }
+
+    /// <summary>
+    /// 转换编码 
+    /// </summary>
+    /// <param name="text">文本</param>
+    /// <param name="srcEncoding">源编码</param>
+    /// <param name="dstEncoding">目标编码</param>
+    /// <returns>目标编码文本</returns>
+    public static string ConvertEncoding(string text, Encoding srcEncoding,  Encoding dstEncoding)
+    {
+      byte[] srcBytes = srcEncoding.GetBytes(text);
+      byte[] dstBytes = Encoding.Convert(srcEncoding, dstEncoding, srcBytes);
+      return dstEncoding.GetString(dstBytes);
+    }
+
+    /// <summary>
+    /// 取文本索引值
+    /// </summary>
+    /// <param name="ch">字符</param>
+    /// <returns>文本索引值</returns>
     private static short GetHashIndex(char ch)
     {
       return (short)((uint)ch % PyCode.codes.Length);

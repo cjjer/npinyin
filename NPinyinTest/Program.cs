@@ -38,16 +38,18 @@ namespace NPinyinTest
         "复方莪术油栓"
       };
 
-      Console.WriteLine("句子拼音：");
+      Console.WriteLine("UTF8句子拼音：");
       foreach (string s in maxims)
       {
         Console.WriteLine("汉字：{0}\n拼音：{1}\n", s, Pinyin.GetPinyin(s));
       }
 
-      Console.WriteLine("拼音简码：");
-      foreach (string s in medicines)
+      Encoding gb2312 = Encoding.GetEncoding("GB2312");
+      Console.WriteLine("GB2312拼音简码：");
+      foreach (string m in medicines)
       {
-        Console.WriteLine("药品：{0}\n简码：{1}\n", s, Pinyin.GetInitials(s));
+        string s = Pinyin.ConvertEncoding(m, Encoding.UTF8, gb2312);
+        Console.WriteLine("药品：{0}\n简码：{1}\n", s, Pinyin.GetInitials(s, gb2312));
       }
 
       Console.ReadKey();
