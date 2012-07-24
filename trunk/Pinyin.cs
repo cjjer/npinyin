@@ -8,8 +8,15 @@
  * 
  * 最后，我想简要地说明一下我的设计思路：
  * 首先，我将汉字按拼音分组后建立一个字符串数组（见PyCode.codes），然后使用程序
- * 将PyCode.codes中每一个汉字散列到和PyCode.codes相同长度的一个散列表中，（见
- * PyHash.hashes），当检索一个汉字的拼音时，首先从PyHash.hashes中获取和
+ * 将PyCode.codes中每一个汉字通过其编码值使用散列函数：
+ * 
+ *     f(x) = x % PyCode.codes.Length
+ *   { 
+ *     g(f(x)) = pos(x)
+ *     
+ * 其中, pos(x)为字符x所属字符串所在的PyCode.codes的数组下标, 然后散列到同
+ * PyCode.codes长度相同长度的一个散列表中PyHash.hashes）。
+ * 当检索一个汉字的拼音时，首先从PyHash.hashes中获取和
  * 对应的PyCode.codes中数组下标，然后从对应字符串查找，当到要查找的字符时，字符
  * 串的前6个字符即包含了该字的拼音。
  * 
